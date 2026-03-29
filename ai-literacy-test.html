@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Literacy Proficiency Test</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; }
+  #root { min-height: 100vh; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+const QUESTIONS = [
+  {id:"A1",section:"A",q:"Which of the following BEST describes Generative AI?",opts:["A system that searches the internet in real time to provide answers","Technology that learns patterns from large datasets and generates new text, images, and other content","A database where programmers pre-register all possible answers","An intelligence that can think and make decisions like a human"],ans:1},
+  {id:"A2",section:"A",q:"When a Large Language Model (LLM) like ChatGPT or Claude generates a response, what is it actually doing internally?",opts:["Human operators are writing the responses in real time behind the scenes","It predicts the most likely next words based on context and patterns learned from training data","It searches a database of correct answers and returns the matching one","It connects to the internet to search for the latest information and summarises the results"],ans:1},
+  {id:"A3",section:"A",q:"Which of the following is something Generative AI is NOT good at or CANNOT do?",opts:["Summarising long documents","Drafting routine emails","Verifying whether its own answers are factually correct","Translating between multiple languages"],ans:2},
+  {id:"A4",section:"A",q:'What is "Hallucination" in the context of AI?',opts:["When AI generates plausible-sounding but factually incorrect information with a confident tone","When AI reads the user's emotions and changes its response accordingly","When AI intentionally lies to the user","When AI freezes because it has exceeded its processing capacity"],ans:0},
+  {id:"A5",section:"A",q:"Which statement about the reliability of AI responses is CORRECT?",opts:["If an AI says 'I am certain,' the answer can be trusted","Responses from well-known AI tools (ChatGPT, Claude, etc.) are generally accurate and can be used as-is","AI responses should always be treated with scepticism, and important information must be verified through other means","If an AI provides a source citation, that source definitely exists"],ans:2},
+  {id:"A6",section:"A",q:'Which statement about AI "training data" is CORRECT?',opts:["Once training is complete, AI's knowledge never becomes outdated","AI training data consists only of information that has been verified for accuracy","AI continuously learns from data around the world in real time","Training data has a cutoff date, and AI may not have accurate information about recent events"],ans:3},
+  {id:"A7",section:"A",q:"Regarding the debate that 'AI will take away jobs,' which is the MOST reasonable view at present?",opts:["AI is a tool that makes specific tasks more efficient; it does not replace human judgement, creativity, or accountability","As AI evolves, all occupations will be fully automated","AI can only handle simple tasks and will not affect knowledge work","AI's capabilities already surpass humans, and there is no longer a need for human decision-making"],ans:0},
+  {id:"A8",section:"A",q:"What is the SINGLE BIGGEST factor that determines the quality of an AI's response?",opts:["The subscription price of the AI service","The time of day the AI is used","The device used (PC or smartphone)","The quality of the instructions (prompt) entered by the user"],ans:3},
+  {id:"B1",section:"B",q:"Which of the following poses the HIGHEST RISK when inputting into an external AI tool?",opts:["Asking a general question like 'What makes a presentation engaging?'","Requesting a translation of your company's already-published press release","Copying internal performance review meeting notes and asking 'Please summarise this'","Asking about general industry trends"],ans:2},
+  {id:"B2",section:"B",q:"What is the GREATEST RISK of sending AI-generated text directly to external parties without review?",opts:["The writing style may appear 'AI-generated'","Sending may take longer than usual","The recipient may lose trust if they dislike AI","The content may contain factually incorrect information or inappropriate expressions"],ans:3},
+  {id:"B3",section:"B",q:"Which of the following is the LOWEST RISK to input into an AI tool?",opts:["'Give me 5 tips for engaging an audience during a presentation'","Your company's unpublished financial data","Contents of materials received under a Non-Disclosure Agreement (NDA)","Information from an employee's payslip"],ans:0},
+  {id:"B4",section:"B",q:"Your manager asks you to 'Use AI to read this contract and summarise the key points.' The contract contains client names, contact person details, and specific commercial terms. What is the MOST appropriate response?",opts:["Remove or anonymise highly confidential information (client names, contact details, specific amounts) before asking AI to help organise the structure and key points","It's your manager's instruction, so input the contract as-is","Input it into AI but save the output only on your own PC \u2014 that's sufficient","Inputting just the first page of the contract into AI should be fine"],ans:0},
+  {id:"B5",section:"B",q:"When making important business decisions based on AI output, which is the CORRECT approach?",opts:["AI analyses vast amounts of data, so its judgement is more accurate than a human's","You can verify reliability by asking the AI 'How confident are you on a scale of 1-100?'","If AI's conclusion differs from your own judgement, you should defer to the AI","AI output should be treated as one reference input; final decisions and accountability must always rest with people"],ans:3},
+  {id:"B6",section:"B",q:"A colleague says: 'I entered the customer complaint details into AI and got it to draft the reply. So convenient!' What is the MOST SERIOUS problem with this action?",opts:["AI-written replies may lack proper business etiquette","The complaint details may contain the customer's personal information and transaction specifics, creating a data leakage risk","Customer service should be done by humans \u2014 using AI is disrespectful","If AI handles complaint responses, it will generate overly emotional text"],ans:1},
+  {id:"B7",section:"B",q:"Regarding the copyright of AI-generated content (text, images, etc.), which is the MOST accurate understanding?",opts:["All AI-generated content can be freely used commercially","AI-generated content is a legal grey area in many jurisdictions, and commercial use requires caution","Copyright of AI-generated content belongs to the AI developer (OpenAI, Anthropic, etc.)","AI-generated content automatically receives copyright, and the person who generated it becomes the copyright holder"],ans:1},
+  {id:"B8",section:"B",q:"Which behaviour pattern should be MOST AVOIDED when using AI at work?",opts:["Critically questioning AI output by asking 'Why would this be the case?'","Trying a different phrasing when you're not satisfied with AI's response","Using AI as a drafting tool or sounding board while understanding its limitations","Hiding the fact that you used AI and reporting the output entirely as your own work"],ans:3},
+  {id:"B9",section:"B",q:"Which of the following is the MOST DANGEROUS misconception about using AI for business?",opts:["'AI is convenient but sometimes makes mistakes'","'AI responses can differ even when asked the same question repeatedly'","'If it's data we use normally within the company, it should be fine to input into AI'","'AI supports human judgement \u2014 it does not replace it'"],ans:2},
+  {id:"B10",section:"B",q:"When submitting a report created with AI assistance to your manager, what is the CORRECT approach?",opts:["Disclose that AI was used and submit only after reviewing and revising the content yourself","No need to mention AI was used, as long as the content is good","AI use is just efficiency improvement, so you can skip the review step","Colour-coding the AI-generated sections is sufficient \u2014 no content review needed"],ans:0},
+  {id:"C1",section:"C",q:"Which of the following does NOT qualify as 'Personal Data' protected under Hong Kong's Personal Data (Privacy) Ordinance (PDPO)?",opts:["An employee's annual performance review report","A complaint email from a customer (containing their name and contact details)","A disciplinary action record for a specific employee","The company's overall quarterly revenue figures"],ans:3},
+  {id:"C2",section:"C",q:"From the perspective of PDPO's Data Protection Principles, what is the MOST important principle when inputting personal data into AI?",opts:["Personal data collection must be directly related to the purpose and must not exceed what is necessary","Personal data should be collected as extensively as possible","When transferring personal data to a third party, notifying the individual is unnecessary","Data accuracy is unimportant \u2014 the act of collection itself has value"],ans:0},
+  {id:"C3",section:"C",q:"If you want to use AI to analyse internal HR data (employee names, evaluation results, salary information), what is the MOST appropriate approach?",opts:["Input it directly into a free version of ChatGPT or similar","Any AI tool is fine as long as your manager gives verbal approval","HR data is internal data, so no special precautions are needed for AI input","Anonymise the data (e.g., replace names with codes) and use only a company-approved AI tool"],ans:3},
+  {id:"C4",section:"C",q:"When a company introduces an AI tool, what is the MOST important thing to do in advance from a PDPO compliance perspective?",opts:["Select the cheapest AI tool available","Review the AI tool's data processing policy to understand where personal data is stored and processed","Publicly announce the AI tool adoption","Conduct AI training for all employees"],ans:1},
+  {id:"C5",section:"C",q:"When a company uses an Enterprise version or API of an AI service with settings configured to 'not use input data for training,' which understanding is CORRECT?",opts:["Once configured, any confidential information can be input without concern","Enterprise versions are completely secure, so PDPO considerations are no longer needed","While the risk of data being used for training is significantly reduced, data is still transmitted and processed externally, so careful selection of what to input remains necessary","The 'no training' setting is technically impossible, so it should not be trusted at all"],ans:2},
+  {id:"C6",section:"C",q:"You want to input the contents of a proposal received from Company A into AI for analysis. What is the MOST appropriate decision?",opts:["The proposal was sent to your company, so you can use it however you wish","Summarising the proposal before inputting it into AI makes it acceptable","Reporting to Company A after the fact is sufficient","Check the contractual terms regarding Company A's information handling (NDA, etc.) and determine whether AI input is permissible"],ans:3},
+  {id:"C7",section:"C",q:"What is the GREATEST RISK of using an AI app installed on your personal smartphone for work-related information?",opts:["Business data is processed outside the company's IT governance, making information management and tracking impossible","It consumes a lot of smartphone battery","The smaller screen increases the chance of errors","Personal AI apps tend to have lower performance"],ans:0},
+  {id:"D1",section:"D",q:"You want AI to draft a quarterly report. Which prompt is MOST LIKELY to produce high-quality output?",opts:["'Write a Q3 performance report'","'Write a Q3 performance report including revenue, profit, and year-on-year comparison'","'Write a Q3 performance report. Make it as detailed as possible. It can be long'","'You are an expert in executive performance reporting. Using the Q3 data below, create a report in three sections: (1) Revenue overview, (2) Year-on-year analysis, (3) Challenges and outlook. Keep each section under 300 words'"],ans:3},
+  {id:"D2",section:"D",q:"Which of the following tasks is MOST SUITABLE to delegate to AI?",opts:["Drafting an announcement for an internal company event","Making the final decision on whether to promote an employee","Creating the final version of an official company response to a customer complaint","Making the final determination on whether a compliance violation has occurred"],ans:0},
+  {id:"D3",section:"D",q:"What is the MOST EFFECTIVE method for verifying whether an AI response is accurate?",opts:["Ask the AI the same question again and check if the same answer is returned","Ask the same question to a different AI service and check if the answers match","Verify the specific facts in the AI's response (figures, laws, proper nouns, etc.) against authoritative primary sources","Ask the AI 'Please provide the basis for this answer' and adopt the response if the reasoning sounds plausible"],ans:2},
+  {id:"D4",section:"D",q:"What is the MOST ACCURATE description of the effect of assigning a role in a prompt, such as 'You are an HR consultant with 10 years of experience'?",opts:["It has no effect and is a meaningless technique","It steers the AI's output toward the vocabulary, perspective, and tone of that specialist field, making the response more contextually relevant","It makes the AI actually qualify as an HR consultant","It guarantees the accuracy of the AI's response"],ans:1},
+  {id:"D5",section:"D",q:"What does the 'Human in the Loop' principle mean in the context of business AI use?",opts:["A person must give permission before every use of AI","A system where people review and intervene at critical decision points in the AI process","AI output must never be used directly \u2014 a person must rewrite everything from scratch","A person must keep a log after using AI"],ans:1},
+  {id:"D6",section:"D",q:"What is the BEST PRACTICE when using AI to write an English email?",opts:["Send the AI-generated English text as-is","Have AI translate your text written in another language and send it directly","Tell AI to 'Write a perfect English email' \u2014 no review needed","Specify the subject, recipient, purpose, and tone (formal/casual), have AI create a draft, then review and revise before sending"],ans:3},
+  {id:"D7",section:"D",q:"When AI doesn't produce the results you expected, what is the MOST EFFECTIVE approach?",opts:["Keep entering the same prompt repeatedly","Accept that AI has limitations and give up","Revise the prompt to be more specific, or add output format requirements and conditions before re-prompting","Switch to a different AI service"],ans:2},
+  {id:"D8",section:"D",q:"When using AI for business tasks, which usage pattern MAXIMISES productivity?",opts:["Have AI produce the final deliverable in one shot","You set the direction and outline, have AI create a draft, then you review and finalise","Let AI generate ideas from scratch and adopt them directly","Delegate all tasks to AI and just do the final approval yourself"],ans:1},
+  {id:"E1",section:"E",q:"You work in Marketing. Your manager says: 'Use AI to create the market analysis slides for next week's client presentation.' The AI-generated analysis includes a market size figure of 'HK$250 billion' with no source cited. What is the MOST appropriate action?",opts:["The figure was generated by AI, so it's reliable. Use it directly in the slides","Ask the AI 'What's your source?' and put whatever source AI provides into the slides","Adding a note saying 'Approximate figure' makes it acceptable to use without verification","Research the source yourself and verify the figure against official statistics or credible reports before using it in the slides"],ans:3},
+  {id:"E2",section:"E",q:"You work in General Affairs. A teammate proposes: 'Let's input employees' commuting routes and home addresses into AI to analyse potential office relocation sites.' What is the MOST appropriate response?",opts:["It will improve efficiency, so proceed immediately","Addresses alone don't constitute personal data, so there's no issue","The analysis purpose is reasonable, but home addresses qualify as personal data. Propose aggregating the data to district level or anonymising it first, and using a company-approved AI tool","Using a personal smartphone AI app instead of external AI would make it safe"],ans:2},
+  {id:"E3",section:"E",q:"You are an HR professional. You input interview evaluation comments \u2014 including candidate names and detailed assessments \u2014 directly into AI and instruct it: 'Should we hire this candidate?' The AI responds: 'I recommend hiring.' What is the MOST SERIOUS problem with this action?",opts:["Inputting the candidate's personal information into external AI AND delegating a critical hiring decision to AI \u2014 two serious problems exist simultaneously","If AI makes the hiring decision, the interviewer's role becomes meaningless","AI lacks specialised hiring expertise, so its judgement is unreliable","If AI had responded 'Do not hire,' it could be deemed discriminatory"],ans:0},
+  {id:"E4",section:"E",q:"As a sales team leader, you want to promote AI adoption among your team members. What is the MOST effective and safe approach?",opts:["'Use AI for anything you want. Let's boost efficiency!' \u2014 give complete freedom","'AI is too dangerous. Don't use it at all' \u2014 ban it within the team","Based on company AI guidelines, share specific examples of what is and isn't acceptable, and regularly review usage practices","Only allow team members with high IT literacy to use AI"],ans:2},
+  {id:"E5",section:"E",q:"Your department is considering introducing an AI chatbot for customer service. What is the MOST important risk to consider?",opts:["The chatbot's response speed may be slow","The chatbot may deliver incorrect information to customers through hallucination, damaging the company's credibility","Customers may not prefer interacting with AI","The implementation cost may be high"],ans:1},
+  {id:"E6",section:"E",q:"Suppose your company has not yet established formal rules for AI use. If you want to use AI for work, what is the MOST appropriate action?",opts:["No rules means you're free to use it however you see fit","Reference other companies' practices, consult with your manager and IT department, and propose creating interim guidelines","Refrain from all AI use until formal rules are established","Use your own judgement to apply AI only to tasks that seem low-risk"],ans:1},
+  {id:"E7",section:"E",q:"As a department manager, a subordinate asks: 'Can we use AI to analyse competitors' internal information?' What is the MOST appropriate response?",opts:["'AI knows everything \u2014 go ahead and try it'","'Competitive analysis should be done with your own eyes. Don't use AI'","'Whatever AI outputs is just speculation, so there's no legal issue regardless of what you analyse'","'Using AI to analyse publicly available information (annual reports, press releases, etc.) is fine. However, using improperly obtained information or having AI generate/speculate about internal information without basis raises both ethical and legal concerns'"],ans:3},
+];
+
+const SECTIONS = {
+  A:{name:"AI Fundamentals",icon:"\u{1F9E0}",count:8},
+  B:{name:"Risks & Prohibited Actions",icon:"\u{26D4}",count:10},
+  C:{name:"Data Privacy & Compliance",icon:"\u{1F512}",count:7},
+  D:{name:"Practical Skills",icon:"\u{1F6E0}",count:8},
+  E:{name:"Scenario Judgement",icon:"\u{1F4CB}",count:7},
+};
+const TOTAL_TIME=20*60, GATE_THRESHOLD=0.8, LABELS=["(a)","(b)","(c)","(d)"];
+function shuffleArray(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function formatTime(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function getLevel(s,t,g){if(!g||s/t<0.7)return"fail";if(s/t>=0.95)return"master";if(s/t>=0.85)return"advanced";return"certified";}
+const LEVEL_INFO={
+  fail:{label:"Not Passed",color:"#8B0000",bg:"#FFF0F0",border:"#FFB3B3",message:"You did not meet the passing criteria this time. We encourage you to review the seminar materials and retake the test."},
+  certified:{label:"Certified",color:"#0A5C36",bg:"#F0FFF4",border:"#68D391",message:"Congratulations! You have demonstrated foundational AI literacy and safe usage awareness."},
+  advanced:{label:"Advanced",color:"#1A4B8C",bg:"#EBF4FF",border:"#63B3ED",message:"Excellent! You have demonstrated strong AI literacy with outstanding safety awareness and practical skills."},
+  master:{label:"Master",color:"#6B21A8",bg:"#FAF5FF",border:"#B794F4",message:"Outstanding! You have demonstrated expert-level AI literacy across all dimensions."},
+};
+const inputStyle={width:"100%",padding:"14px 16px",borderRadius:8,border:"1px solid rgba(255,255,255,0.15)",background:"rgba(255,255,255,0.06)",color:"#E8EDF4",fontSize:15,fontFamily:"'Helvetica Neue', sans-serif",outline:"none",transition:"border-color 0.2s"};
+const labelStyle={display:"block",fontSize:12,color:"#7B93B8",letterSpacing:1,textTransform:"uppercase",marginBottom:8};
+
+function App(){
+  const[phase,setPhase]=useState("start");
+  const[regData,setRegData]=useState({name:"",email:"",company:""});
+  const[regErrors,setRegErrors]=useState({});
+  const[questions,setQuestions]=useState([]);
+  const[currentQ,setCurrentQ]=useState(0);
+  const[answers,setAnswers]=useState({});
+  const[timeLeft,setTimeLeft]=useState(TOTAL_TIME);
+  const[showConfirm,setShowConfirm]=useState(false);
+  const timerRef=useRef(null);
+
+  const validateReg=()=>{
+    const e={};
+    if(!regData.name.trim())e.name="Please enter your name";
+    if(!regData.email.trim())e.email="Please enter your email";
+    else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regData.email.trim()))e.email="Please enter a valid email address";
+    if(!regData.company.trim())e.company="Please enter your company name";
+    setRegErrors(e);return Object.keys(e).length===0;
+  };
+  const startTest=useCallback(()=>{
+    const g={};Object.keys(SECTIONS).forEach(s=>g[s]=[]);
+    QUESTIONS.forEach(q=>g[q.section].push(q));
+    setQuestions(Object.keys(SECTIONS).flatMap(s=>shuffleArray(g[s])));
+    setAnswers({});setCurrentQ(0);setTimeLeft(TOTAL_TIME);setPhase("test");
+  },[]);
+
+  useEffect(()=>{
+    if(phase==="test"){
+      timerRef.current=setInterval(()=>{
+        setTimeLeft(p=>{if(p<=1){clearInterval(timerRef.current);setPhase("result");return 0;}return p-1;});
+      },1000);
+      return()=>clearInterval(timerRef.current);
+    }
+  },[phase]);
+
+  const answeredCount=Object.keys(answers).length;
+  const unansweredCount=questions.length-answeredCount;
+
+  const results=useMemo(()=>{
+    if(phase!=="result")return null;
+    const ss={};Object.keys(SECTIONS).forEach(s=>ss[s]={correct:0,total:0});
+    let tc=0;
+    questions.forEach(q=>{ss[q.section].total++;if(answers[q.id]===q.ans){ss[q.section].correct++;tc++;}});
+    const bc=ss.B.correct+ss.C.correct,bt=ss.B.total+ss.C.total,gp=bc/bt>=GATE_THRESHOLD;
+    return{sectionScores:ss,totalCorrect:tc,bcCorrect:bc,bcTotal:bt,gatePass:gp,level:getLevel(tc,questions.length,gp),timeTaken:TOTAL_TIME-timeLeft};
+  },[phase,answers,questions,timeLeft]);
+
+  // ═══ START ═══
+  if(phase==="start"){
+    return React.createElement("div",{style:{minHeight:"100vh",background:"linear-gradient(160deg,#0B1120 0%,#1A2744 40%,#0F1B2D 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Georgia','Times New Roman',serif"}},
+      React.createElement("div",{style:{maxWidth:580,width:"100%",textAlign:"center"}},
+        React.createElement("div",{style:{fontSize:13,letterSpacing:6,color:"#7B93B8",textTransform:"uppercase",marginBottom:12,fontFamily:"'Helvetica Neue',sans-serif"}},"Certification Examination"),
+        React.createElement("h1",{style:{fontSize:32,color:"#E8EDF4",fontWeight:400,margin:"0 0 8px",lineHeight:1.3}},"AI Literacy",React.createElement("br"),"Proficiency Test"),
+        React.createElement("div",{style:{width:60,height:2,background:"linear-gradient(90deg,#4A7AB5,#7B93B8)",margin:"20px auto",borderRadius:1}}),
+        React.createElement("div",{style:{color:"#8BA3C4",fontSize:14,lineHeight:1.8,marginBottom:36,fontFamily:"'Helvetica Neue',sans-serif"}},
+          React.createElement("p",{style:{margin:"0 0 16px"}},"40 questions \u00B7 20 minutes \u00B7 Multiple choice"),
+          React.createElement("div",{style:{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"20px 24px",textAlign:"left",maxWidth:420,margin:"0 auto"}},
+            React.createElement("div",{style:{marginBottom:14}},
+              React.createElement("span",{style:{color:"#6B8BB5",fontSize:12,textTransform:"uppercase",letterSpacing:2}},"Passing Criteria"),
+              React.createElement("p",{style:{margin:"6px 0 0",color:"#C4D4E8",fontSize:13}},"Overall score \u2265 70% ",React.createElement("span",{style:{color:"#7B93B8"}},"AND")," Sections B+C \u2265 80%")),
+            React.createElement("div",null,
+              React.createElement("span",{style:{color:"#6B8BB5",fontSize:12,textTransform:"uppercase",letterSpacing:2}},"Levels"),
+              React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 16px",marginTop:8,fontSize:13}},
+                React.createElement("span",{style:{color:"#68D391"}},"Certified \u2014 70%+"),
+                React.createElement("span",{style:{color:"#63B3ED"}},"Advanced \u2014 85%+"),
+                React.createElement("span",{style:{color:"#B794F4"}},"Master \u2014 95%+"))))),
+        React.createElement("button",{onClick:()=>setPhase("register"),style:{background:"linear-gradient(135deg,#3B6DAA,#4A7AB5)",color:"#fff",border:"none",padding:"14px 48px",borderRadius:8,fontSize:15,cursor:"pointer",letterSpacing:1,fontFamily:"'Helvetica Neue',sans-serif"}},"Begin Examination"),
+        React.createElement("p",{style:{color:"#5A7396",fontSize:11,marginTop:16,fontFamily:"'Helvetica Neue',sans-serif"}},"Certification is valid for 1 year from the date of passing")));
+  }
+
+  // ═══ REGISTRATION ═══
+  if(phase==="register"){
+    const go=()=>{if(validateReg())startTest();};
+    const kd=e=>{if(e.key==="Enter")go();};
+    const fc="#4A7AB5";
+    return React.createElement("div",{style:{minHeight:"100vh",background:"linear-gradient(160deg,#0B1120 0%,#1A2744 40%,#0F1B2D 100%)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"'Helvetica Neue',Arial,sans-serif"}},
+      React.createElement("div",{className:"fade-in",style:{maxWidth:460,width:"100%"}},
+        React.createElement("div",{style:{textAlign:"center",marginBottom:32}},
+          React.createElement("div",{style:{fontSize:12,letterSpacing:4,color:"#7B93B8",textTransform:"uppercase",marginBottom:8}},"Registration"),
+          React.createElement("h2",{style:{fontSize:24,color:"#E8EDF4",fontWeight:400,fontFamily:"Georgia,serif"}},"Enter Your Details"),
+          React.createElement("p",{style:{color:"#7B93B8",fontSize:13,marginTop:8}},"This information will be used for your certification.")),
+        React.createElement("div",{style:{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:16,padding:"32px 28px"}},
+          React.createElement("div",{style:{marginBottom:24}},
+            React.createElement("label",{style:labelStyle},"Full Name (English)"),
+            React.createElement("input",{type:"text",placeholder:"e.g. Chan Tai Man",value:regData.name,
+              onChange:e=>setRegData(p=>Object.assign({},p,{name:e.target.value})),onKeyDown:kd,
+              onFocus:e=>e.target.style.borderColor=fc,onBlur:e=>e.target.style.borderColor="rgba(255,255,255,0.15)",style:inputStyle}),
+            regErrors.name&&React.createElement("div",{style:{fontSize:12,color:"#FC8181",marginTop:4}},regErrors.name)),
+          React.createElement("div",{style:{marginBottom:24}},
+            React.createElement("label",{style:labelStyle},"Email Address"),
+            React.createElement("input",{type:"email",placeholder:"e.g. name@company.com",value:regData.email,
+              onChange:e=>setRegData(p=>Object.assign({},p,{email:e.target.value})),onKeyDown:kd,
+              onFocus:e=>e.target.style.borderColor=fc,onBlur:e=>e.target.style.borderColor="rgba(255,255,255,0.15)",style:inputStyle}),
+            regErrors.email&&React.createElement("div",{style:{fontSize:12,color:"#FC8181",marginTop:4}},regErrors.email)),
+          React.createElement("div",{style:{marginBottom:28}},
+            React.createElement("label",{style:labelStyle},"Company Name"),
+            React.createElement("input",{type:"text",placeholder:"e.g. ABC Limited",value:regData.company,
+              onChange:e=>setRegData(p=>Object.assign({},p,{company:e.target.value})),onKeyDown:kd,
+              onFocus:e=>e.target.style.borderColor=fc,onBlur:e=>e.target.style.borderColor="rgba(255,255,255,0.15)",style:inputStyle}),
+            regErrors.company&&React.createElement("div",{style:{fontSize:12,color:"#FC8181",marginTop:4}},regErrors.company)),
+          React.createElement("p",{style:{fontSize:11,color:"#5A7396",lineHeight:1.6,marginBottom:24}},"Your information will be used solely for certification purposes and will not be shared with third parties."),
+          React.createElement("button",{onClick:go,style:{width:"100%",background:"linear-gradient(135deg,#3B6DAA,#4A7AB5)",color:"#fff",border:"none",padding:"14px",borderRadius:8,fontSize:15,cursor:"pointer",letterSpacing:1}},"Start Test \u2192")),
+        React.createElement("div",{style:{textAlign:"center",marginTop:16}},
+          React.createElement("button",{onClick:()=>setPhase("start"),style:{background:"none",border:"none",color:"#5A7396",cursor:"pointer",fontSize:13}},"\u2190 Back"))));
+  }
+
+  // ═══ TEST ═══
+  if(phase==="test"){
+    const q=questions[currentQ];
+    const si=questions.findIndex(x=>x.section===q.section);
+    const sIdx=currentQ-si+1;
+    const urg=timeLeft<=120;
+    const prog=((currentQ+1)/questions.length)*100;
+    return React.createElement("div",{style:{minHeight:"100vh",background:"#F5F6F8",fontFamily:"'Helvetica Neue','Arial',sans-serif"}},
+      React.createElement("div",{style:{background:"#fff",borderBottom:"1px solid #E2E5EA",padding:"10px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",position:"sticky",top:0,zIndex:10}},
+        React.createElement("div",{style:{fontSize:13,color:"#5A6577"}},React.createElement("span",{style:{fontWeight:600,color:"#1A2744"}},"Q",currentQ+1)," / ",questions.length),
+        React.createElement("div",{style:{fontSize:22,fontWeight:600,color:urg?"#C53030":"#1A2744",fontVariantNumeric:"tabular-nums",animation:urg?"pulse 1s ease-in-out infinite":"none"}},formatTime(timeLeft)),
+        React.createElement("div",{style:{fontSize:12,color:"#5A6577"}},answeredCount," answered")),
+      React.createElement("div",{style:{height:3,background:"#E2E5EA"}},
+        React.createElement("div",{style:{height:3,background:"linear-gradient(90deg,#3B6DAA,#63B3ED)",width:prog+"%",transition:"width 0.3s"}})),
+      React.createElement("div",{style:{maxWidth:680,margin:"0 auto",padding:"28px 20px 100px"}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:16}},
+          React.createElement("span",{style:{fontSize:16}},SECTIONS[q.section].icon),
+          React.createElement("span",{style:{fontSize:12,color:"#5A6577",letterSpacing:1,textTransform:"uppercase"}},"Section ",q.section,": ",SECTIONS[q.section].name),
+          React.createElement("span",{style:{fontSize:12,color:"#8B96A7",marginLeft:"auto"}},sIdx," / ",SECTIONS[q.section].count)),
+        React.createElement("div",{style:{background:"#fff",borderRadius:12,padding:"28px 28px 24px",boxShadow:"0 1px 4px rgba(0,0,0,0.06)",marginBottom:16}},
+          React.createElement("p",{style:{fontSize:16,lineHeight:1.7,color:"#1A2744",margin:0,fontWeight:500}},q.q)),
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+          q.opts.map((opt,i)=>{
+            const sel=answers[q.id]===i;
+            return React.createElement("button",{key:i,onClick:()=>setAnswers(p=>Object.assign({},p,{[q.id]:i})),
+              style:{display:"flex",alignItems:"flex-start",gap:14,padding:"16px 20px",borderRadius:10,
+                background:sel?"#EBF4FF":"#fff",border:sel?"2px solid #3B6DAA":"2px solid #E2E5EA",
+                cursor:"pointer",textAlign:"left",transition:"all 0.15s",fontSize:14,lineHeight:1.6,color:"#2D3748"}},
+              React.createElement("span",{style:{minWidth:28,height:28,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600,
+                background:sel?"#3B6DAA":"#F0F2F5",color:sel?"#fff":"#5A6577",flexShrink:0,marginTop:1}},LABELS[i]),
+              React.createElement("span",null,opt));}))),
+      React.createElement("div",{style:{position:"fixed",bottom:0,left:0,right:0,background:"#fff",borderTop:"1px solid #E2E5EA",padding:"12px 20px",display:"flex",justifyContent:"center",gap:12,zIndex:10}},
+        React.createElement("button",{onClick:()=>setCurrentQ(Math.max(0,currentQ-1)),disabled:currentQ===0,
+          style:{padding:"10px 24px",borderRadius:8,border:"1px solid #D1D5DB",background:"#fff",color:currentQ===0?"#C4C9D1":"#3B6DAA",cursor:currentQ===0?"default":"pointer",fontSize:13,fontWeight:500}},"\u2190 Previous"),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:3,flexWrap:"wrap",maxWidth:300,justifyContent:"center"}},
+          questions.map((qq,i)=>React.createElement("div",{key:i,onClick:()=>setCurrentQ(i),
+            style:{width:i===currentQ?10:7,height:i===currentQ?10:7,borderRadius:"50%",
+              background:i===currentQ?"#3B6DAA":answers[qq.id]!==undefined?"#68D391":"#D1D5DB",cursor:"pointer",transition:"all 0.15s"}}))),
+        currentQ<questions.length-1?
+          React.createElement("button",{onClick:()=>setCurrentQ(currentQ+1),style:{padding:"10px 24px",borderRadius:8,border:"none",background:"#3B6DAA",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500}},"Next \u2192"):
+          React.createElement("button",{onClick:()=>setShowConfirm(true),style:{padding:"10px 24px",borderRadius:8,border:"none",background:"#0A5C36",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:500}},"Submit \u2713")),
+      showConfirm&&React.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:20}},
+        React.createElement("div",{style:{background:"#fff",borderRadius:16,padding:"32px 28px",maxWidth:400,width:"90%",textAlign:"center"}},
+          React.createElement("h3",{style:{margin:"0 0 12px",fontSize:18,color:"#1A2744"}},"Submit Your Answers?"),
+          unansweredCount>0?
+            React.createElement("p",{style:{color:"#C53030",fontSize:14,margin:"0 0 16px"}},"\u26A0 You have ",unansweredCount," unanswered question",unansweredCount>1?"s":"",". Unanswered questions will be marked incorrect."):
+            React.createElement("p",{style:{color:"#5A6577",fontSize:14,margin:"0 0 16px"}},"You have answered all ",questions.length," questions."),
+          React.createElement("div",{style:{display:"flex",gap:12,justifyContent:"center"}},
+            React.createElement("button",{onClick:()=>setShowConfirm(false),style:{padding:"10px 28px",borderRadius:8,border:"1px solid #D1D5DB",background:"#fff",color:"#3B6DAA",cursor:"pointer",fontSize:14}},"Go Back"),
+            React.createElement("button",{onClick:()=>{clearInterval(timerRef.current);setPhase("result");},style:{padding:"10px 28px",borderRadius:8,border:"none",background:"#0A5C36",color:"#fff",cursor:"pointer",fontSize:14}},"Confirm Submit")))));
+  }
+
+  // ═══ RESULT (scores + level only) ═══
+  if(phase==="result"){
+    const{sectionScores:ss,totalCorrect:tc,bcCorrect:bc,bcTotal:bt,gatePass:gp,level:lv,timeTaken:tt}=results;
+    const li=LEVEL_INFO[lv],pct=Math.round((tc/questions.length)*100),bcPct=Math.round((bc/bt)*100),passed=lv!=="fail";
+
+    return React.createElement("div",{style:{minHeight:"100vh",background:"linear-gradient(160deg,#0B1120 0%,#1A2744 40%,#0F1B2D 100%)",fontFamily:"'Helvetica Neue','Arial',sans-serif",padding:"40px 20px"}},
+      React.createElement("div",{className:"fade-in",style:{maxWidth:560,margin:"0 auto"}},
+        // Candidate
+        React.createElement("div",{style:{textAlign:"center",marginBottom:8}},
+          React.createElement("div",{style:{fontSize:12,letterSpacing:4,color:"#7B93B8",textTransform:"uppercase",marginBottom:16}},"Examination Result"),
+          React.createElement("div",{style:{fontSize:16,color:"#C4D4E8",marginBottom:4}},regData.name),
+          React.createElement("div",{style:{fontSize:13,color:"#7B93B8",marginBottom:20}},regData.company)),
+        // Level
+        React.createElement("div",{style:{textAlign:"center",marginBottom:28}},
+          React.createElement("div",{style:{display:"inline-block",background:li.bg,border:"2px solid "+li.border,borderRadius:16,padding:"20px 40px"}},
+            React.createElement("div",{style:{fontSize:36,fontWeight:700,color:li.color,fontFamily:"Georgia,serif"}},li.label)),
+          React.createElement("p",{style:{color:"#8BA3C4",fontSize:14,marginTop:16,lineHeight:1.7,maxWidth:400,margin:"16px auto 0"}},li.message)),
+        // Scores
+        React.createElement("div",{style:{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:24,marginBottom:20}},
+          React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,textAlign:"center"}},
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:36,fontWeight:700,color:"#E8EDF4"}},pct,"%"),
+              React.createElement("div",{style:{fontSize:12,color:"#7B93B8",marginTop:4}},"Overall Score"),
+              React.createElement("div",{style:{fontSize:12,color:"#5A7396"}},tc," / ",questions.length)),
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:36,fontWeight:700,color:gp?"#68D391":"#FC8181"}},bcPct,"%"),
+              React.createElement("div",{style:{fontSize:12,color:"#7B93B8",marginTop:4}},"B+C Gate ",gp?"\u2713":"\u2717"),
+              React.createElement("div",{style:{fontSize:12,color:"#5A7396"}},bc," / ",bt," (need ",Math.ceil(bt*GATE_THRESHOLD),")")),
+            React.createElement("div",null,
+              React.createElement("div",{style:{fontSize:36,fontWeight:700,color:"#E8EDF4"}},formatTime(tt)),
+              React.createElement("div",{style:{fontSize:12,color:"#7B93B8",marginTop:4}},"Time Used"),
+              React.createElement("div",{style:{fontSize:12,color:"#5A7396"}},"of 20:00")))),
+        // Section breakdown
+        React.createElement("div",{style:{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:24,marginBottom:20}},
+          React.createElement("div",{style:{fontSize:12,letterSpacing:2,color:"#7B93B8",textTransform:"uppercase",marginBottom:16}},"Section Breakdown"),
+          Object.keys(SECTIONS).map(s=>{
+            const sc=ss[s],sp=sc.total>0?Math.round((sc.correct/sc.total)*100):0,ig=s==="B"||s==="C";
+            return React.createElement("div",{key:s,style:{marginBottom:14}},
+              React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}},
+                React.createElement("span",{style:{fontSize:13,color:"#C4D4E8"}},SECTIONS[s].icon," ",s,". ",SECTIONS[s].name," ",
+                  ig&&React.createElement("span",{style:{fontSize:10,color:gp?"#68D391":"#FC8181",marginLeft:4}},"GATE")),
+                React.createElement("span",{style:{fontSize:13,fontWeight:600,color:sp>=80?"#68D391":sp>=70?"#F6E05E":"#FC8181"}},sc.correct,"/",sc.total," (",sp,"%)")),
+              React.createElement("div",{style:{height:6,background:"rgba(255,255,255,0.08)",borderRadius:3}},
+                React.createElement("div",{style:{height:6,borderRadius:3,width:sp+"%",
+                  background:sp>=80?"linear-gradient(90deg,#38A169,#68D391)":sp>=70?"linear-gradient(90deg,#D69E2E,#F6E05E)":"linear-gradient(90deg,#C53030,#FC8181)",
+                  transition:"width 0.6s"}})));})),
+        // Certificate info
+        passed&&React.createElement("div",{style:{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:24,marginBottom:20,textAlign:"center"}},
+          React.createElement("div",{style:{fontSize:20,marginBottom:8}},"\u{1F3C6}"),
+          React.createElement("div",{style:{fontSize:14,color:"#C4D4E8",fontWeight:600,marginBottom:8}},"Certificate Available"),
+          React.createElement("p",{style:{fontSize:13,color:"#8BA3C4",lineHeight:1.7,margin:0}},
+            "Your test results have been recorded. A formal AI Literacy Proficiency Certificate (",
+            React.createElement("span",{style:{color:LEVEL_INFO[lv].color,fontWeight:600}},LEVEL_INFO[lv].label),
+            " level) can be issued upon request."),
+          React.createElement("p",{style:{fontSize:13,color:"#8BA3C4",lineHeight:1.7,margin:"12px 0 0"}},
+            "Details will be sent to: ",React.createElement("span",{style:{color:"#C4D4E8",fontWeight:500}},regData.email)),
+          React.createElement("p",{style:{fontSize:11,color:"#5A7396",marginTop:12}},"A certificate issuance fee applies. Valid for 1 year from the date of issue.")),
+        // Not passed
+        !passed&&React.createElement("div",{style:{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:16,padding:24,marginBottom:20,textAlign:"center"}},
+          React.createElement("p",{style:{fontSize:13,color:"#8BA3C4",lineHeight:1.7,margin:0}},
+            "Review the seminar materials, focusing on the sections where you scored lowest, and try again. There is no limit on the number of retakes.")),
+        // Retake
+        React.createElement("div",{style:{textAlign:"center"}},
+          React.createElement("button",{onClick:()=>{setPhase("start");setShowConfirm(false);setRegData({name:"",email:"",company:""});},
+            style:{padding:"12px 36px",borderRadius:8,border:"none",background:"#3B6DAA",color:"#fff",cursor:"pointer",fontSize:14}},"Retake Test")),
+        React.createElement("div",{style:{textAlign:"center",marginTop:24,paddingBottom:20}},
+          React.createElement("p",{style:{fontSize:11,color:"#3A4D6B"}},"\u00A9 Anaxis Ltd. All rights reserved."))));
+  }
+  return null;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>
